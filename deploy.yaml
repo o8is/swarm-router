@@ -1,0 +1,129 @@
+---
+version: "2.0"
+endpoints:
+  web-ip:
+    kind: ip
+
+services:
+  bee:
+    image: ethersphere/bee:2.6.0
+    expose:
+      - port: 1633
+        as: 1633
+        to:
+          - global: false
+          - service: caddy
+          - service: poller
+      - port: 1634
+        as: 1634
+        to:
+          - global: false
+          - service: caddy
+          - service: poller
+    env:
+      - BEE_API_ADDR=:1633
+      - BEE_FULL_NODE=false
+      - BEE_SWAP_ENABLE=false
+      - BEE_PASSWORD=flummoxedgranitecarrot
+      - BEE_BLOCKCHAIN_RPC_ENDPOINT=https://xdai.fairdatasociety.org
+      - BEE_CORS_ALLOWED_ORIGINS=*
+    command:
+      - bee
+    args:
+      - start
+
+  caddy:
+    image: caddy:2.8-alpine
+    expose:
+      - port: 80
+        as: 80
+        to:
+          - global: true
+            ip: web-ip
+      - port: 2019
+        as: 2019
+        to:
+          - global: false
+          - service: poller
+    env:
+      - CADDY_ADMIN=0.0.0.0:2019
+    command:
+      - caddy
+    args:
+      - run
+      - --resume
+
+  poller:
+    image: octalmage/swarm-caddy-poller:0.1.8
+    depends_on:
+      - bee
+      - caddy
+    expose:
+      - port: 12345
+        as: 12345
+        to:
+          - global: false
+    env:
+      - BEE_API_URL=http://bee:1633
+      - CADDY_ADMIN=http://caddy:2019
+      - MAPPINGS_FEED=bzz://f3f5e25c90824876c2468b9bdf0d842cd05dc5f0974681789b9729bc155c4f65/
+      - POLL_INTERVAL=300
+
+profiles:
+  compute:
+    bee:
+      resources:
+        cpu:
+          units: 2
+        memory:
+          size: 2Gi
+        storage:
+          - size: 2Gi
+    caddy:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 512Mi
+        storage:
+          - size: 1Gi
+    poller:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 256Mi
+        storage:
+          - size: 100Mi
+
+  placement:
+    dc1:
+      pricing:
+        bee:
+          denom: uakt
+          amount: 1000
+        caddy:
+          denom: uakt
+          amount: 1000
+        poller:
+          denom: uakt
+          amount: 500
+      signedBy:
+        anyOf:
+          - akash1365yvmc4s7awdyj3n2sav7xfx76adc6dnmlx63
+      attributes:
+        host: akash
+
+deployment:
+  bee:
+    dc1:
+      profile: bee
+      count: 1
+  caddy:
+    dc1:
+      profile: caddy
+      count: 1
+  poller:
+    dc1:
+      profile: poller
+      count: 1

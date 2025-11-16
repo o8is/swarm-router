@@ -1,0 +1,6 @@
+# ---- Runtime -------------------------------------------------------
+FROM python:3.12-slim
+WORKDIR /app
+COPY poller.py .
+RUN pip install --no-cache-dir requests
+CMD ["python", "-u", "poller.py"]
