@@ -11,6 +11,11 @@ backend bee {
 }
 
 sub vcl_recv {
+    # Pass POST, PUT, DELETE and other non-GET/HEAD requests directly to backend
+    if (req.method != "GET" && req.method != "HEAD") {
+        return (pass);
+    }
+
     # Use bee as backend
     set req.backend_hint = bee;
 
