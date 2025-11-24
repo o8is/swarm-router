@@ -1,4 +1,5 @@
 {
+	# Order the dnslink directive before reverse_proxy, respond, and error so it runs first
 	order dnslink before reverse_proxy
 	order dnslink before respond
 	order dnslink before error
@@ -9,7 +10,7 @@
 	}
 }
 
-:80 {
+(swarm_routing) {
 	dnslink {
 		proxies {
 			/swarm /bzz varnish:8080
@@ -28,5 +29,16 @@
 			}
 		}
 	}
+}
+
+:80 {
+	import swarm_routing
+}
+
+:443 {
+	tls {
+		on_demand
+	}
+	import swarm_routing
 }
 
