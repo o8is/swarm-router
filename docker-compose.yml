@@ -6,14 +6,13 @@ services:
       - BEE_API_ADDR=:1633
       - BEE_FULL_NODE=false
       - BEE_SWAP_ENABLE=false
-      - BEE_PASSWORD=flummoxedgranitecarrot
-      - BEE_BLOCKCHAIN_RPC_ENDPOINT=https://xdai.fairdatasociety.org
+      - BEE_BLOCKCHAIN_RPC_ENDPOINT=https://gnosis.oat.farm
       - BEE_CORS_ALLOWED_ORIGINS=*
     ports:
       - "1633:1633"
 
   caddy:
-    image: swarm-router-caddy
+    image: ghcr.io/o8is/swarm-router-caddy:latest
     ports:
       - "8080:80"
       - "8443:443"
@@ -24,7 +23,7 @@ services:
       - CADDY_ADMIN=0.0.0.0:2019
 
   varnish:
-    image: swarm-router-varnish
+    image: octalmage/swarm-varnish:0.1.5
     environment:
       - VARNISH_SIZE=256M
     command:
@@ -38,6 +37,6 @@ services:
       - malloc,256M
 
   gatekeeper:
-    image: swarm-router-gatekeeper
+    image: ghcr.io/o8is/swarm-router-gatekeeper:latest
     environment:
       - PORT=9123

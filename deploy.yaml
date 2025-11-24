@@ -22,7 +22,6 @@ services:
       - BEE_API_ADDR=:1633
       - BEE_FULL_NODE=false
       - BEE_SWAP_ENABLE=false
-      - BEE_PASSWORD=flummoxedgranitecarrot
       - BEE_BLOCKCHAIN_RPC_ENDPOINT=https://gnosis.oat.farm
       - BEE_CORS_ALLOWED_ORIGINS=*
     command:
