@@ -1,0 +1,32 @@
+{
+	order dnslink before reverse_proxy
+	order dnslink before respond
+	order dnslink before error
+
+	debug
+	on_demand_tls {
+		ask http://gatekeeper:9123/check
+	}
+}
+
+:80 {
+	dnslink {
+		proxies {
+			/swarm /bzz varnish:8080
+		}
+		cache_ttl 5m
+	}
+
+	error 404
+
+	handle_errors {
+		@404 expression {http.error.status_code} == 404
+		handle @404 {
+			rewrite * /error.html
+			file_server {
+				root /etc/caddy
+			}
+		}
+	}
+}
+

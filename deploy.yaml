@@ -13,13 +13,11 @@ services:
         to:
           - global: false
           - service: varnish
-          - service: poller
       - port: 1634
         as: 1634
         to:
           - global: false
           - service: varnish
-          - service: poller
     env:
       - BEE_API_ADDR=:1633
       - BEE_FULL_NODE=false
@@ -33,7 +31,7 @@ services:
       - start
 
   caddy:
-    image: caddy:2.8-alpine
+    image: ghcr.io/o8-is/swarm-router-caddy:0.1.0
     expose:
       - port: 80
         as: 80
@@ -45,18 +43,12 @@ services:
         to:
           - global: true
             ip: web-ip
-      - port: 2019
-        as: 2019
-        to:
-          - global: false
-          - service: poller
-    env:
-      - CADDY_ADMIN=0.0.0.0:2019
     command:
       - caddy
     args:
       - run
-      - --resume
+      - --config
+      - /etc/caddy/Caddyfile
 
   varnish:
     image: octalmage/swarm-varnish:0.1.5
@@ -83,21 +75,16 @@ services:
       - -s
       - malloc,256M
 
-  poller:
-    image: octalmage/swarm-caddy-poller:0.4.1
-    depends_on:
-      - bee
-      - caddy
+  gatekeeper:
+    image: ghcr.io/o8-is/swarm-router-gatekeeper:latest
     expose:
-      - port: 12345
-        as: 12345
+      - port: 9123
+        as: 9123
         to:
           - global: false
+          - service: caddy
     env:
-      - BEE_API_URL=http://bee:1633
-      - CADDY_ADMIN=http://caddy:2019
-      - MAPPINGS_FEED=bzz://f3f5e25c90824876c2468b9bdf0d842cd05dc5f0974681789b9729bc155c4f65/
-      - POLL_INTERVAL=300
+      - PORT=9123
 
 profiles:
   compute:
@@ -125,12 +112,12 @@ profiles:
           size: 512Mi
         storage:
           - size: 500Mi
-    poller:
+    gatekeeper:
       resources:
         cpu:
           units: 0.5
         memory:
-          size: 256Mi
+          size: 128Mi
         storage:
           - size: 100Mi
 
@@ -146,7 +133,7 @@ profiles:
         varnish:
           denom: uakt
           amount: 1000
-        poller:
+        gatekeeper:
           denom: uakt
           amount: 500
       signedBy:
@@ -168,7 +155,7 @@ deployment:
     dc1:
       profile: varnish
       count: 1
-  poller:
+  gatekeeper:
     dc1:
-      profile: poller
+      profile: gatekeeper
       count: 1

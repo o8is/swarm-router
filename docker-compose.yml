@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  bee:
+    image: ethersphere/bee:2.6.0
+    command: start
+    environment:
+      - BEE_API_ADDR=:1633
+      - BEE_FULL_NODE=false
+      - BEE_SWAP_ENABLE=false
+      - BEE_PASSWORD=flummoxedgranitecarrot
+      - BEE_BLOCKCHAIN_RPC_ENDPOINT=https://xdai.fairdatasociety.org
+      - BEE_CORS_ALLOWED_ORIGINS=*
+    ports:
+      - "1633:1633"
+
+  caddy:
+    image: swarm-router-caddy
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      - gatekeeper
+      - varnish
+    environment:
+      - CADDY_ADMIN=0.0.0.0:2019
+
+  varnish:
+    image: swarm-router-varnish
+    environment:
+      - VARNISH_SIZE=256M
+    command:
+      - varnishd
+      - -F
+      - -a
+      - :8080
+      - -f
+      - /etc/varnish/default.vcl
+      - -s
+      - malloc,256M
+
+  gatekeeper:
+    image: swarm-router-gatekeeper
+    environment:
+      - PORT=9123

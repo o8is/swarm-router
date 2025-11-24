@@ -1,45 +1,66 @@
 # Swarm Router
 
-Dynamic domain routing for Ethereum Swarm. Maps custom domains to Swarm content using a decentralized configuration feed.
+A high-performance, zero-configuration gateway for Ethereum Swarm that routes domains based on DNSLink records.
 
-## How it works
+## Overview
 
-1. **Poller** fetches domain mappings from Swarm
-2. **Caddy** gets configured to route each domain to its Swarm content
-3. **Bee** serves the actual content from the Swarm network
+Swarm Router allows you to point any domain to Ethereum Swarm content without configuring the server. It uses a "Pull" model where the configuration lives in the DNS records of the domains themselves, rather than a central configuration file.
 
-## Configuration
+### Architecture
 
-Create a JSON mapping file and upload it to Swarm:
+1.  **Caddy (with `caddy-dnslink`)**: The entry point. It intercepts requests, looks up the `_dnslink` TXT record for the hostname, and rewrites the request to the corresponding Swarm hash.
+2.  **Gatekeeper**: A security sidecar that validates domains before Caddy issues TLS certificates. It ensures that only domains with valid DNSLink records are allowed to consume resources.
+3.  **Varnish**: A high-performance HTTP accelerator that caches Swarm content to reduce load on the Bee node and improve response times.
+4.  **Bee**: The Ethereum Swarm node that retrieves content from the decentralized network.
 
-```json
-{
-  "example.com": "bzz://abc123.../",
-  "docs.example.com": "bzz://xyz789.../"
-}
-```
+## Features
 
-Set environment variables:
+*   **Zero-Configuration**: Add a new domain just by creating DNS records. No server restarts or API calls required.
+*   **On-Demand TLS**: Automatically provisions and renews HTTPS certificates for any valid domain that points to the router.
+*   **DNSLink Support**: Fully compatible with the [DNSLink standard](https://dnslink.dev).
+*   **Smart Caching**: Varnish caching tuned for immutable Swarm content.
+*   **DDoS Protection**: Gatekeeper prevents TLS abuse by verifying domain ownership via DNS before issuance.
 
-```
-MAPPINGS_FEED=bzz://your-mapping-hash/
-POLL_INTERVAL=300          # seconds between updates
-CACHE_MAX_AGE=3600         # browser cache duration in seconds
-```
+## Usage
+
+To point a domain to your Swarm Router:
+
+1.  **CNAME Record**: Point your domain to the router's hostname (or A record to its IP).
+    ```text
+    example.com.  IN  CNAME  router.your-domain.com.
+    ```
+
+2.  **TXT Record**: Create a `_dnslink` TXT record containing the Swarm reference.
+    ```text
+    _dnslink.example.com.  IN  TXT  "dnslink=/swarm/<hash>"
+    ```
+
+The router will automatically detect these records, provision an SSL certificate, resolve the hash, and serve the content.
 
 ## Deployment
 
-The poller image is available on Docker Hub: `octalmage/swarm-caddy-poller`
+### Akash Network
 
-Deploy to Akash using the [Akash Console](https://console.akash.network/) with the included `deploy.yaml`.
+This project is optimized for deployment on the [Akash Network](https://akash.network).
 
-## Building (optional)
+1.  Use the provided `deploy.yaml`.
+2.  Adjust the resource profiles if necessary.
+3.  Deploy using the Akash Console or CLI.
 
-If you want to build your own image:
+### Docker Compose
+
+You can run the stack locally or on a VPS using Docker Compose:
 
 ```bash
-docker build --platform linux/amd64 -t your-image:latest --push .
+docker compose up -d
 ```
+
+## Components
+
+*   **`swarm-router-caddy`**: Custom Caddy build including the [caddy-dnslink](https://github.com/o8is/caddy-dnslink) module.
+*   **`swarm-router-gatekeeper`**: Go service that acts as an `ask` endpoint for Caddy's On-Demand TLS.
+*   **`swarm-router-varnish`**: Varnish Cache configured for Swarm.
+*   **`ethersphere/bee`**: Official Swarm node.
 
 ## License
 
