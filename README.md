@@ -8,7 +8,7 @@ Swarm Router allows you to point any domain to Ethereum Swarm content without co
 
 ### Architecture
 
-1.  **Caddy (with `caddy-dnslink`)**: The entry point. It intercepts requests, looks up the `_dnslink` TXT record for the hostname, and rewrites the request to the corresponding Swarm hash.
+1.  **Caddy (with [caddy-dnslink](https://github.com/o8is/caddy-dnslink))**: The entry point. It intercepts requests, looks up the `_dnslink` TXT record for the hostname, and rewrites the request to the corresponding Swarm hash.
 2.  **Gatekeeper**: A security sidecar that validates domains before Caddy issues TLS certificates. It ensures that only domains with valid DNSLink records are allowed to consume resources.
 3.  **Varnish**: A high-performance HTTP accelerator that caches Swarm content to reduce load on the Bee node and improve response times.
 4.  **Bee**: The Ethereum Swarm node that retrieves content from the decentralized network.
