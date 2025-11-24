@@ -1,17 +1,17 @@
 # Swarm Router
 
-A high-performance, zero-configuration gateway for Ethereum Swarm that routes domains based on DNSLink records.
+A high-performance, zero-configuration gateway for Swarm that routes domains based on DNSLink records.
 
 ## Overview
 
-Swarm Router allows you to point any domain to Ethereum Swarm content without configuring the server. It uses a "Pull" model where the configuration lives in the DNS records of the domains themselves, rather than a central configuration file.
+Swarm Router allows you to point any domain to Swarm content without configuring the server. It uses a "Pull" model where the configuration lives in the DNS records of the domains themselves, rather than a central configuration file.
 
 ### Architecture
 
 1.  **Caddy (with [caddy-dnslink](https://github.com/o8is/caddy-dnslink))**: The entry point. It intercepts requests, looks up the `_dnslink` TXT record for the hostname, and rewrites the request to the corresponding Swarm hash.
 2.  **Gatekeeper**: A security sidecar that validates domains before Caddy issues TLS certificates. It ensures that only domains with valid DNSLink records are allowed to consume resources.
 3.  **Varnish**: A high-performance HTTP accelerator that caches Swarm content to reduce load on the Bee node and improve response times.
-4.  **Bee**: The Ethereum Swarm node that retrieves content from the decentralized network.
+4.  **Bee**: The Swarm node that retrieves content from the decentralized network.
 
 ## Features
 
