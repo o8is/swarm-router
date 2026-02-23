@@ -51,6 +51,15 @@ sub vcl_backend_response {
     # Remove Set-Cookie from backend responses
     unset beresp.http.Set-Cookie;
 
+    # Don't cache error responses (especially 404s). Content-addressed
+    # uploads may return 404 briefly before the data is available
+    if (beresp.status >= 400) {
+        set beresp.ttl = 0s;
+        set beresp.grace = 0s;
+        set beresp.uncacheable = true;
+        return (deliver);
+    }
+
     # Cache based on Cache-Control headers set by Caddy
     if (beresp.http.Cache-Control ~ "max-age") {
         unset beresp.http.Set-Cookie;
